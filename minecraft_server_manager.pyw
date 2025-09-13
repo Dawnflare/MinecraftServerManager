@@ -68,6 +68,7 @@ class Manager:
         self.online = set()
         self.ui_update_online = None
         self.ui_update_status = None
+        self.status = "offline"
 
     # ----- logging ------------------------------------------------------------
     def _append_logfile(self, path: Path, line: str):
@@ -116,11 +117,12 @@ class Manager:
         )
         threading.Thread(target=self._reader, daemon=True).start()
         threading.Thread(target=self._watch_stopflag, daemon=True).start()
-        self._refresh_status_ui(True)
+        self._refresh_status_ui("starting")
 
     JOIN_RE  = re.compile(r"\]:\s*([A-Za-z0-9_]+)\s+joined the game")
     LEAVE_RE = re.compile(r"\]:\s*([A-Za-z0-9_]+)\s+left the game")
     LIST_RE  = re.compile(r"players online:\s*(.*)$")
+    READY_RE = re.compile(r"\]:\s*Done\s*\(", re.IGNORECASE)
 
     def _parse_line_for_events(self, line: str):
         m = self.JOIN_RE.search(line)
@@ -155,9 +157,12 @@ class Manager:
             try: self.ui_update_online(sorted(self.online))
             except Exception: pass
 
-    def _refresh_status_ui(self, running: bool):
+    def _refresh_status_ui(self, state: str):
+        if state == self.status:
+            return
+        self.status = state
         if self.ui_update_status:
-            try: self.ui_update_status(running)
+            try: self.ui_update_status(state)
             except Exception: pass
 
     def _reader(self):
@@ -165,11 +170,15 @@ class Manager:
             for raw in self.proc.stdout:
                 if not raw: continue
                 line = raw.rstrip(); self.log(line)
-                try: self._parse_line_for_events(line)
-                except Exception: pass
+                try:
+                    self._parse_line_for_events(line)
+                    if self.READY_RE.search(line):
+                        self._refresh_status_ui("online")
+                except Exception:
+                    pass
         finally:
             rc = self.proc.poll(); self.log(f"Server exited with code {rc}.")
-            self._refresh_status_ui(False)
+            self._refresh_status_ui("offline")
 
     def _watch_stopflag(self):
         while self.proc and self.proc.poll() is None:
@@ -191,7 +200,7 @@ class Manager:
 
     def stop(self):
         if not self.proc or self.proc.poll() is not None:
-            self.log("Server not running."); self._refresh_status_ui(False); return
+            self.log("Server not running."); self._refresh_status_ui("offline"); return
         try:
             self.proc.stdin.write("save-all\n"); self.proc.stdin.flush(); time.sleep(1)
             self.log("Sending 'stop'..."); self.proc.stdin.write("stop\n"); self.proc.stdin.flush()
@@ -211,7 +220,7 @@ class Manager:
             self.log("Force kill...")
             try: self.proc.kill()
             except Exception: pass
-        self._refresh_status_ui(False)
+        self._refresh_status_ui("offline")
 
     # Whitelist helpers
     def read_whitelist_names(self):
@@ -318,14 +327,16 @@ for label, cmd in (("Start Server", mgr.start), ("Stop Server", mgr.stop), ("Sav
     tk.Button(btns, text=label, width=16, command=cmd).pack(side="left", padx=5)
 
 # Update status label
-def ui_update_status(running):
-    if running:
+def ui_update_status(state):
+    if state == "online":
         status_lbl.config(text="● Minecraft Server Online", fg="green")
+    elif state == "starting":
+        status_lbl.config(text="● Minecraft Server Starting...", fg="orange")
     else:
         status_lbl.config(text="● Minecraft Server Offline", fg="red")
 
 mgr.ui_update_status = ui_update_status
-ui_update_status(False)
+ui_update_status("offline")
 
 # Left: log + command
 log = scrolledtext.ScrolledText(frm, width=90, height=26, state="disabled")
