@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Automatic 30s refresh of online players list (plus manual Refresh button).
 - Backup button refuses to run while the server is active, with warning message.
 - Better layout for splash image and controls.
+- Stable filename: `minecraft_server_manager.pyw` (internal version noted in header).
 
 ### Changed
 - Backup logs are streamed into the GUI with `[backup]` prefix.
@@ -26,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [v7c] - 2025-09-11
 ### Added
-- Splash image support: IceFireYinYangTransparent.png can be displayed in the GUI.
+- Splash image support: assets/IceFireYinYangTransparent.png can be displayed in the GUI.
 
 ### Changed
 - Reorganized layout to reduce wasted space.
