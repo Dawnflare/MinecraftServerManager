@@ -1,6 +1,6 @@
 # Minecraft Forge Server Manager (Windows GUI)
 
-A tiny, no-console **.pyw** GUI for starting/stopping a **Forge (Java) Minecraft server** on Windows.
+A no-console Python **.pyw** GUI for starting/stopping a **Forge (Java) Minecraft server** on Windows.
 It uses Forge’s official arg files (`@user_jvm_args.txt` and `@...\win_args.txt`), shows live logs,
 lets you send server commands, manage the whitelist, view online players, and integrates with backups
 and Windows Task Scheduler.
