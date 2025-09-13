@@ -19,5 +19,13 @@ while ((Get-Date) -lt $deadline) {
 }
 if (-not $stopped) { Write-Output "Timeout waiting for server; continuing to power down." }
 
+# Allow the user to see the GUI has stopped before closing the manager
+Start-Sleep -Seconds 10
+
+# Close the minecraft_server_manager.pyw application so it can be relaunched later
+Get-CimInstance Win32_Process |
+    Where-Object { $_.CommandLine -like '*minecraft_server_manager.pyw*' } |
+    ForEach-Object { Invoke-CimMethod -InputObject $_ -MethodName Terminate | Out-Null }
+
 # Hibernate (swap to shutdown in note below if desired)
 shutdown.exe /h
