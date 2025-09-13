@@ -1,43 +1,100 @@
-# Gracefully stop Forge (via stop.flag) then hibernate
-# Determine the directory that contains this script so paths are relative to
-# the Minecraft server root.  This allows the script to be moved without
-# editing hard-coded paths.
-$dir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$flag = Join-Path $dir "stop.flag"
-$log  = Join-Path $dir "wrapper.log"
+# StopServer-And-Hibernate.ps1
+# Gracefully stop the Forge server, run backup.bat, then hibernate.
+# Run from Task Scheduler as SYSTEM with "Start in" set to the server folder.
 
-New-Item -Path $flag -ItemType File -Force | Out-Null
+# ------------------- CONFIG -------------------
+$ServerDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
+$StopFlag    = Join-Path $ServerDir "stop.flag"
+$BackupBat   = Join-Path $ServerDir "backup.bat"
+$TimeoutSec  = 180      # how long to wait for the server to exit after stop.flag
+$PollMillis  = 1000     # how often to poll for exit (ms)
+$LogFile     = Join-Path $ServerDir "Stop-Hibernate.log"
+# ----------------------------------------------
 
-# Wait up to 3 minutes for the wrapper to log the exit
-$deadline = (Get-Date).AddMinutes(3)
-$stopped = $false
-while ((Get-Date) -lt $deadline) {
-    if (Test-Path $log) {
-        try {
-            $stream = [System.IO.File]::Open($log, [System.IO.FileMode]::Open,
-                [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
-            try {
-                $reader = New-Object System.IO.StreamReader($stream)
-                $txt = $reader.ReadToEnd()
-            } finally {
-                $reader.Dispose(); $stream.Dispose()
-            }
-            if ($txt -like '*Server exited with code*') { $stopped = $true; break }
-        } catch {
-            # Ignore file access issues and retry
-        }
-    }
-    Start-Sleep -Seconds 5
+Set-Location $ServerDir
+
+function Log($msg) {
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $line = "[$ts] $msg"
+    $line | Tee-Object -FilePath $LogFile -Append
 }
-if (-not $stopped) { Write-Output "Timeout waiting for server; continuing to power down." }
 
-# Allow the user to see the GUI has stopped before closing the manager
+# 1) Signal stop via stop.flag (manager watches for this)
+try {
+    Log "Creating stop.flag ..."
+    "stop" | Out-File -FilePath $StopFlag -Encoding ascii -Force
+} catch {
+    Log "ERROR writing stop.flag: $($_.Exception.Message)"
+}
+
+# 2) Wait for the Java server process to exit
+function IsServerRunning {
+    $procs = Get-Process -Name "java","javaw" -ErrorAction SilentlyContinue
+    foreach ($p in $procs) {
+        try {
+            $cmd = (Get-CimInstance Win32_Process -Filter "ProcessId=$($p.Id)").CommandLine
+            if ($cmd -and ($cmd -match "forge" -or $cmd -match "win_args\.txt" -or $cmd -match "fmlloader")) {
+                return $true
+            }
+        } catch {}
+    }
+    return $false
+}
+
+$elapsed = 0
+while ($elapsed -lt $TimeoutSec) {
+    if (-not (IsServerRunning)) {
+        Log "Server process is no longer running."
+        break
+    }
+    Start-Sleep -Milliseconds $PollMillis
+    $elapsed += [int]($PollMillis / 1000)
+}
+if ($elapsed -ge $TimeoutSec) {
+    Log "WARNING: Timed out waiting ($TimeoutSec s) for server to exit. Proceeding anyway."
+}
+
+# 3) Run backup if present and server appears to be stopped
+if (Test-Path $BackupBat) {
+    if (-not (IsServerRunning)) {
+        Log "Starting backup: $BackupBat"
+        try {
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = "cmd.exe"
+            $psi.Arguments = "/c `"$BackupBat`""
+            $psi.WorkingDirectory = $ServerDir
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError  = $true
+            $psi.UseShellExecute = $false
+            $p = [System.Diagnostics.Process]::Start($psi)
+            $p.OutputDataReceived += { if ($_.Data) { Log "[backup] $($_.Data)" } }
+            $p.ErrorDataReceived  += { if ($_.Data) { Log "[backup] $($_.Data)" } }
+            $p.BeginOutputReadLine()
+            $p.BeginErrorReadLine()
+            $p.WaitForExit()
+            Log "Backup finished with exit code $($p.ExitCode)."
+        } catch {
+            Log "ERROR running backup: $($_.Exception.Message)"
+        }
+    } else {
+        Log "Skipped backup: server still running."
+    }
+} else {
+    Log "No backup.bat found at $BackupBat (skipping backup)."
+}
+
+# 4) Close the minecraft_server_manager.pyw application so it can be relaunched later
 Start-Sleep -Seconds 10
-
-# Close the minecraft_server_manager.pyw application so it can be relaunched later
 Get-CimInstance Win32_Process |
     Where-Object { $_.CommandLine -like '*minecraft_server_manager.pyw*' } |
-    ForEach-Object { Invoke-CimMethod -InputObject $_ -MethodName Terminate | Out-Null }
+    ForEach-Object {
+        Log "Closing manager process $($_.ProcessId)"
+        Invoke-CimMethod -InputObject $_ -MethodName Terminate | Out-Null
+    }
 
-# Hibernate (swap to shutdown in note below if desired)
-shutdown.exe /h
+# 5) Hibernate
+Log "Hibernating system ..."
+try {
+    powercfg /HIBERNATE ON | Out-Null
+} catch {}
+shutdown /h
