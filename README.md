@@ -1,5 +1,7 @@
 # Minecraft Forge Server Manager (Windows GUI)
 
+**Version 8**
+
 A no-console Python **.pyw** GUI for starting/stopping a **Forge (Java) Minecraft server** on Windows.
 It uses Forge’s official arg files (`@user_jvm_args.txt` and `@...\win_args.txt`), shows live logs,
 lets you send server commands, manage the whitelist, view online players, and integrates with backups
@@ -99,7 +101,8 @@ echo Done.
 
 ## Scheduling (start/stop daily)
 
-See `StopServer-And-Hibernate.ps1` and the PowerShell snippet in this README’s repository history.
+`Windows_task_creator.ps1` builds the Windows Task Scheduler entries for you. Edit the times at the top of the script and run it from an elevated PowerShell prompt to register start tasks (launch `minecraft_server_manager.pyw`) and stop tasks (run `StopServer-And-Hibernate.ps1`).
+
 Typical plan:
 
 - **Start tasks** (wake PC) → run the GUI; auto-start kicks in.
@@ -107,11 +110,20 @@ Typical plan:
 
 Make sure **Power Options → Allow wake timers** is enabled.
 
+If `StopServer-And-Hibernate.ps1` is blocked by antivirus, add it as an exception. Bitdefender steps:
+
+1. Open Bitdefender.
+2. Go to **Protection → Antivirus → Settings**.
+3. In **Exceptions**, click **Add exception**.
+4. Browse to `StopServer-And-Hibernate.ps1` and add it, keeping both *On-access* and *On-demand* scanning enabled.
+5. Save. The script runs normally afterwards.
+
 ---
 
 ## Optional helper scripts
 
-- `StopServer-And-Hibernate.ps1` – drops `stop.flag`, waits for exit, then hibernates.
+- `Windows_task_creator.ps1` – registers start/stop tasks in Windows Task Scheduler based on configurable times.
+- `StopServer-And-Hibernate.ps1` – drops `stop.flag`, waits for exit, then hibernates (add to AV exceptions if flagged).
 - `make_icon.py` – turns `assets\IceFireYinYangTransparent.png` → `assets\IceFireYinYang.ico` (requires Pillow).
 - `create_shortcut.ps1` – creates a desktop shortcut that points to the `.pyw` and assigns the icon.
 
