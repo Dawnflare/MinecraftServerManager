@@ -17,6 +17,13 @@ $WeekdayStopTime  = "08:00"  # Weekday stop time
 $DailyStopTime    = "00:00"  # Daily stop time
 $RemoveExistingTasks = $true  # Remove existing MinecraftServerManager* tasks?
 
+# Sanitize times for use in task names (remove colon)
+$DailyStartName  = $DailyStartTime -replace ':', ''
+$MTThFStartName  = $MTThFStartTime -replace ':', ''
+$WedStartName    = $WedStartTime -replace ':', ''
+$WeekdayStopName = $WeekdayStopTime -replace ':', ''
+$DailyStopName   = $DailyStopTime -replace ':', ''
+
 # --- Derived Paths ---
 
 $ServerRoot  = $PSScriptRoot
@@ -57,7 +64,7 @@ $opt = @{ Force = $true }
 
 # --- Register tasks ---
 
-Register-ScheduledTask -TaskName "$TaskPrefix Start Daily $DailyStartTime" `
+Register-ScheduledTask -TaskName "$TaskPrefix Start Daily $DailyStartName" `
     -Action $startAction `
     -Trigger $trig_start_daily `
     -Principal $startPrincipal `
@@ -65,7 +72,7 @@ Register-ScheduledTask -TaskName "$TaskPrefix Start Daily $DailyStartTime" `
     -Description "Wake and start server manager (auto-starts server)" `
     @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Start MonTueThuFri $MTThFStartTime" `
+Register-ScheduledTask -TaskName "$TaskPrefix Start MonTueThuFri $MTThFStartName" `
     -Action $startAction `
     -Trigger $trig_start_mtthf `
     -Principal $startPrincipal `
@@ -73,7 +80,7 @@ Register-ScheduledTask -TaskName "$TaskPrefix Start MonTueThuFri $MTThFStartTime
     -Description "Wake and start server manager (auto-starts server)" `
     @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Start Wed $WedStartTime" `
+Register-ScheduledTask -TaskName "$TaskPrefix Start Wed $WedStartName" `
     -Action $startAction `
     -Trigger $trig_start_wed `
     -Principal $startPrincipal `
@@ -81,7 +88,7 @@ Register-ScheduledTask -TaskName "$TaskPrefix Start Wed $WedStartTime" `
     -Description "Wake and start server manager (auto-starts server)" `
     @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Stop Weekdays $WeekdayStopTime (Hibernate)" `
+Register-ScheduledTask -TaskName "$TaskPrefix Stop Weekdays $WeekdayStopName (Hibernate)" `
     -Action $stopAction `
     -Trigger $trig_stop_weekday `
     -Principal $systemPrincipal `
@@ -89,7 +96,7 @@ Register-ScheduledTask -TaskName "$TaskPrefix Stop Weekdays $WeekdayStopTime (Hi
     -Description "Graceful stop via stop.flag, wait for exit, then hibernate" `
     @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Stop Daily $DailyStopTime (Hibernate)" `
+Register-ScheduledTask -TaskName "$TaskPrefix Stop Daily $DailyStopName (Hibernate)" `
     -Action $stopAction `
     -Trigger $trig_stop_daily `
     -Principal $systemPrincipal `
