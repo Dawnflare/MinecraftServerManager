@@ -15,6 +15,8 @@ from pathlib import Path
 import os, subprocess, threading, queue, time, json, re, tkinter as tk
 from tkinter import scrolledtext, messagebox, simpledialog
 
+BASE_DIR = Path(__file__).resolve().parent
+
 APP_NAME = "Minecraft Forge Server Manager"
 AUTO_START = True                  # start server automatically when GUI opens
 AUTO_ONLINE_REFRESH_SECS = 30      # how often to auto-run 'list' while running
@@ -23,14 +25,13 @@ AUTO_ONLINE_REFRESH_SECS = 30      # how often to auto-run 'list' while running
 JAVA_PATH = r"C:\\Program Files\\Java\\jdk-21\\bin\\java.exe"  # adjust if needed
 XMS = "2G"    # initial heap
 XMX = "10G"   # max heap
-PLAYER_LOG_PATH = Path(r"D:\\Backups\\MinecraftBackups\\player_activity.log")  # change if desired
 # -----------------------------------------------------------------------------
 
 # Paths anchored to this script location (so repo can move machines/paths)
-BASE_DIR = Path(__file__).resolve().parent
 SERVER_DIR = BASE_DIR
 ASSETS_DIR = BASE_DIR / "assets"
 SPLASH_IMAGE = ASSETS_DIR / "IceFireYinYangTransparent.png"  # optional
+PLAYER_LOG_PATH = BASE_DIR / "playerlogs" / "player_activity.log"
 
 LOG_PATH = SERVER_DIR / "wrapper.log"
 STOP_FLAG = SERVER_DIR / "stop.flag"
