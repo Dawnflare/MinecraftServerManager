@@ -1,5 +1,5 @@
 # Minecraft Forge Server Manager (Stable Filename)
-# Version: v7e (2025-09-12)
+# Version: v8 (2025-09-13)
 # - Uses stable filename `minecraft_server_manager.pyw` so tasks/shortcuts won't break across updates
 # - Auto-starts server on launch (configurable)
 # - Runs as .pyw (no black console)
