@@ -5,6 +5,7 @@ Instructions:
 - Place this script in the same directory as minecraft_server_manager.pyw and StopServer-And-Hibernate.ps1.
 - Modify the configuration variables below to set your desired task times.
 - Run this script from an elevated PowerShell prompt (Run as Administrator) to create the tasks.
+- Start tasks are registered for the currently logged-on user when possible, otherwise they run as SYSTEM.
 - By default, existing tasks starting with "MinecraftServerManager" will be removed before new tasks are registered.
 #>
 
@@ -37,7 +38,13 @@ $psExe   = "powershell.exe"
 
 $startAction = New-ScheduledTaskAction -Execute $pywExe -Argument "`"$ManagerPyw`"" -WorkingDirectory $ServerRoot
 $stopAction  = New-ScheduledTaskAction -Execute $psExe -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$StopScript`"" -WorkingDirectory $ServerRoot
-$startPrincipal  = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
+$interactiveUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
+if ([string]::IsNullOrWhiteSpace($interactiveUser)) {
+    # Fallback to SYSTEM if no interactive user is detected
+    $startPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+} else {
+    $startPrincipal = New-ScheduledTaskPrincipal -UserId $interactiveUser -LogonType Interactive -RunLevel Highest
+}
 $systemPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
 
 $setStart = New-ScheduledTaskSettingsSet -WakeToRun:$true -AllowStartIfOnBatteries:$true
