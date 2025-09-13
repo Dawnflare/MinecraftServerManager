@@ -30,7 +30,6 @@ $psExe   = "powershell.exe"
 
 $startAction = New-ScheduledTaskAction -Execute $pywExe -Argument "`"$ManagerPyw`"" -WorkingDirectory $ServerRoot
 $stopAction  = New-ScheduledTaskAction -Execute $psExe -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$StopScript`"" -WorkingDirectory $ServerRoot
-
 $startPrincipal  = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
 $systemPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
 
@@ -58,24 +57,44 @@ $opt = @{ Force = $true }
 
 # --- Register tasks ---
 
-Register-ScheduledTask -TaskName "$TaskPrefix Start Daily $DailyStartTime" \
-  -Action $startAction -Trigger $trig_start_daily -Principal $startPrincipal -Settings $setStart \
-  -Description "Wake and start server manager (auto-starts server)" @opt
+Register-ScheduledTask -TaskName "$TaskPrefix Start Daily $DailyStartTime" `
+    -Action $startAction `
+    -Trigger $trig_start_daily `
+    -Principal $startPrincipal `
+    -Settings $setStart `
+    -Description "Wake and start server manager (auto-starts server)" `
+    @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Start MonTueThuFri $MTThFStartTime" \
-  -Action $startAction -Trigger $trig_start_mtthf -Principal $startPrincipal -Settings $setStart \
-  -Description "Wake and start server manager (auto-starts server)" @opt
+Register-ScheduledTask -TaskName "$TaskPrefix Start MonTueThuFri $MTThFStartTime" `
+    -Action $startAction `
+    -Trigger $trig_start_mtthf `
+    -Principal $startPrincipal `
+    -Settings $setStart `
+    -Description "Wake and start server manager (auto-starts server)" `
+    @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Start Wed $WedStartTime" \
-  -Action $startAction -Trigger $trig_start_wed -Principal $startPrincipal -Settings $setStart \
-  -Description "Wake and start server manager (auto-starts server)" @opt
+Register-ScheduledTask -TaskName "$TaskPrefix Start Wed $WedStartTime" `
+    -Action $startAction `
+    -Trigger $trig_start_wed `
+    -Principal $startPrincipal `
+    -Settings $setStart `
+    -Description "Wake and start server manager (auto-starts server)" `
+    @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Stop Weekdays $WeekdayStopTime (Hibernate)" \
-  -Action $stopAction -Trigger $trig_stop_weekday -Principal $systemPrincipal -Settings $setStop \
-  -Description "Graceful stop via stop.flag, wait for exit, then hibernate" @opt
+Register-ScheduledTask -TaskName "$TaskPrefix Stop Weekdays $WeekdayStopTime (Hibernate)" `
+    -Action $stopAction `
+    -Trigger $trig_stop_weekday `
+    -Principal $systemPrincipal `
+    -Settings $setStop `
+    -Description "Graceful stop via stop.flag, wait for exit, then hibernate" `
+    @opt
 
-Register-ScheduledTask -TaskName "$TaskPrefix Stop Daily $DailyStopTime (Hibernate)" \
-  -Action $stopAction -Trigger $trig_stop_daily -Principal $systemPrincipal -Settings $setStop \
-  -Description "Graceful stop via stop.flag, wait for exit, then hibernate" @opt
+Register-ScheduledTask -TaskName "$TaskPrefix Stop Daily $DailyStopTime (Hibernate)" `
+    -Action $stopAction `
+    -Trigger $trig_stop_daily `
+    -Principal $systemPrincipal `
+    -Settings $setStop `
+    -Description "Graceful stop via stop.flag, wait for exit, then hibernate" `
+    @opt
 
 Write-Host "All tasks created. Verify wake timers are enabled in Power Options."
