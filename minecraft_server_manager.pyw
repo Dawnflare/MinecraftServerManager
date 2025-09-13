@@ -237,6 +237,11 @@ class Manager:
 
 mgr = Manager()
 root = tk.Tk(); root.title(APP_NAME); root.geometry("1280x780")
+
+# Status indicator at top of window
+status_lbl = tk.Label(root, text="\u25cf Minecraft Server Offline", fg="red", font=("Arial", 18, "bold"))
+status_lbl.pack(pady=(10,0))
+
 frm = tk.Frame(root, padx=8, pady=6); frm.pack(fill="both", expand=True)
 
 # Optional splash image (from assets/)
@@ -312,15 +317,12 @@ def exit_app():
 for label, cmd in (("Start Server", mgr.start), ("Stop Server", mgr.stop), ("Save All", save_all), ("Backup", run_backup), ("Make stop.flag", make_flag), ("Exit", exit_app)):
     tk.Button(btns, text=label, width=16, command=cmd).pack(side="left", padx=5)
 
-# Status indicator
-status_lbl = tk.Label(btns, text="● Server offline", fg="red")
-status_lbl.pack(side="left", padx=20)
-
+# Update status label
 def ui_update_status(running):
     if running:
-        status_lbl.config(text="● Server online", fg="green")
+        status_lbl.config(text="● Minecraft Server Online", fg="green")
     else:
-        status_lbl.config(text="● Server offline", fg="red")
+        status_lbl.config(text="● Minecraft Server Offline", fg="red")
 
 mgr.ui_update_status = ui_update_status
 ui_update_status(False)
