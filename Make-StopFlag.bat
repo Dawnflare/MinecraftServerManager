@@ -1,4 +1,3 @@
 @echo off
-cd /d "<path to server folder>"
-
+cd /d "%~dp0"
 echo.> stop.flag
