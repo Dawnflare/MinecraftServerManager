@@ -147,4 +147,4 @@ MinecraftServerManager/
 
 ## License
 
-Apache License 2.0 (see `LICENSE` in this repo).
+MIT License (see `LICENSE` in this repo).
