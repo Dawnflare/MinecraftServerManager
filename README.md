@@ -118,6 +118,7 @@ If `StopServer-And-Hibernate.ps1` is blocked by antivirus, add it as an exceptio
 4. Browse to `StopServer-And-Hibernate.ps1` and add it, keeping both *On-access* and *On-demand* scanning enabled.
 5. Save. The script runs normally afterwards.
 
+Alternatively, you could use the optional StopServer-And-Hibernate.bat which has similar function to StopServer-And-Hibernate.ps1 using cmd rather than powershell.
 ---
 
 ## Optional helper scripts
