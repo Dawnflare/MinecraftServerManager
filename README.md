@@ -20,6 +20,7 @@ and Windows Task Scheduler.
 - Watches **`stop.flag`** (handy for Task Scheduler shutdowns).
 - Optional **splash image** (PNG/ICO) and **player join/leave log**.
 - Runs as **.pyw** → no black console window.
+- **Stable filename:** `minecraft_server_manager.pyw` (version noted in header comment).
 
 ---
 
@@ -41,21 +42,21 @@ Optional:
    ```
    C:\Users\<you>\Minecraft\IceAndFireServer\
    ```
-   alongside `run.bat` (if you have one), `libraries\`, `mods\`, etc.
+   alongside `user_jvm_args.txt`, `libraries\`, `mods\`, etc.
 
-2. Open `server_manager_v7e.pyw` (or latest) in a text editor and adjust:
+2. Open `minecraft_server_manager.pyw` in a text editor and adjust:
    ```python
    JAVA_PATH = r"C:\Program Files\Java\jdk-21\bin\java.exe"
    XMS = "2G"   # initial heap
    XMX = "10G"  # max heap
    ```
-   Optional: put your PNG in the same folder and set `SPLASH_IMAGE`.
+   Optional splash image at: `assets\IceFireYinYangTransparent.png`
 
 3. **Run it**:
    - Double-click the `.pyw`, or
    - Shortcut target:
      ```
-     %SystemRoot%\pyw.exe "C:\...\server_manager_v7e.pyw"
+     %SystemRoot%\pyw.exe "C:\...\minecraft_server_manager.pyw"
      ```
    The GUI opens and (by default) **auto-starts** the server.
 
@@ -68,7 +69,7 @@ Optional:
 - **Start / Stop** – Launch/quit the server (clean stop).
 - **Save All** – Flush world to disk.
 - **Backup** – Runs `backup.bat` (refuses while server is running).
-- **Make stop.flag** – Creates a `stop.flag`; the app detects it and issues `stop` (nice for Task Scheduler).
+- **Make stop.flag** – Creates a `stop.flag`; the app detects it and issues `stop` (great for Task Scheduler).
 - **Exit** – `save-all` → clean stop → small delay → closes GUI.
 - **Whitelist** – Add/remove players and view the list (remove works offline by editing `whitelist.json` if needed).
 - **Online Players** – Shows who’s on; auto-refreshes every 30 s; **Refresh** sends `list` on demand.
@@ -111,7 +112,7 @@ Make sure **Power Options → Allow wake timers** is enabled.
 ## Optional helper scripts
 
 - `StopServer-And-Hibernate.ps1` – drops `stop.flag`, waits for exit, then hibernates.
-- `make_icon.py` – turns `IceFireYinYangTransparent.png` → `IceFireYinYang.ico` (requires Pillow).
+- `make_icon.py` – turns `assets\IceFireYinYangTransparent.png` → `assets\IceFireYinYang.ico` (requires Pillow).
 - `create_shortcut.ps1` – creates a desktop shortcut that points to the `.pyw` and assigns the icon.
 
 ---
@@ -120,12 +121,13 @@ Make sure **Power Options → Allow wake timers** is enabled.
 
 ```
 MinecraftServerManager/
-├─ server_manager_v7e.pyw
+├─ minecraft_server_manager.pyw
 ├─ StopServer-And-Hibernate.ps1
 ├─ make_icon.py                 # optional
 ├─ create_shortcut.ps1          # optional
 ├─ README.md
 ├─ .gitignore
+├─ CHANGELOG.md
 └─ assets/
    └─ IceFireYinYangTransparent.png  # optional splash/icon
 ```
