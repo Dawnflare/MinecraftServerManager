@@ -1,3 +1,4 @@
 @echo off
-cd /d "C:\Users\saged\Minecraft\IceAndFireServer"
+cd /d "<path to server folder>"
+
 echo.> stop.flag
