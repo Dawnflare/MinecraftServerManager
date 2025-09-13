@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 - Future improvements TBD.
+- Fix Windows task creator script by removing unsupported parameter causing errors.
 
 ## [v7e] - 2025-09-12
 ### Added

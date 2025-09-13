@@ -34,8 +34,8 @@ $stopAction  = New-ScheduledTaskAction -Execute $psExe -Argument "-NoProfile -Ex
 $startPrincipal  = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
 $systemPrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
 
-$setStart = New-ScheduledTaskSettingsSet -WakeToRun:$true -AllowStartIfOnBatteries:$true -DisallowStartIfOnBatteries:$false
-$setStop  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries:$true -DisallowStartIfOnBatteries:$false
+$setStart = New-ScheduledTaskSettingsSet -WakeToRun:$true -AllowStartIfOnBatteries:$true
+$setStop  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries:$true
 
 # --- Remove existing tasks if requested ---
 
