@@ -1,5 +1,8 @@
 # Gracefully stop Forge (via stop.flag) then hibernate
-$dir = "C:\Users\saged\Minecraft\IceAndFireServer"
+# Determine the directory that contains this script so paths are relative to
+# the Minecraft server root.  This allows the script to be moved without
+# editing hard-coded paths.
+$dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $flag = Join-Path $dir "stop.flag"
 $log  = Join-Path $dir "wrapper.log"
 
