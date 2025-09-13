@@ -67,6 +67,7 @@ class Manager:
         self.q = queue.Queue()
         self.online = set()
         self.ui_update_online = None
+        self.ui_update_status = None
 
     # ----- logging ------------------------------------------------------------
     def _append_logfile(self, path: Path, line: str):
@@ -115,6 +116,7 @@ class Manager:
         )
         threading.Thread(target=self._reader, daemon=True).start()
         threading.Thread(target=self._watch_stopflag, daemon=True).start()
+        self._refresh_status_ui(True)
 
     JOIN_RE  = re.compile(r"\]:\s*([A-Za-z0-9_]+)\s+joined the game")
     LEAVE_RE = re.compile(r"\]:\s*([A-Za-z0-9_]+)\s+left the game")
@@ -153,6 +155,11 @@ class Manager:
             try: self.ui_update_online(sorted(self.online))
             except Exception: pass
 
+    def _refresh_status_ui(self, running: bool):
+        if self.ui_update_status:
+            try: self.ui_update_status(running)
+            except Exception: pass
+
     def _reader(self):
         try:
             for raw in self.proc.stdout:
@@ -162,6 +169,7 @@ class Manager:
                 except Exception: pass
         finally:
             rc = self.proc.poll(); self.log(f"Server exited with code {rc}.")
+            self._refresh_status_ui(False)
 
     def _watch_stopflag(self):
         while self.proc and self.proc.poll() is None:
@@ -183,7 +191,7 @@ class Manager:
 
     def stop(self):
         if not self.proc or self.proc.poll() is not None:
-            self.log("Server not running."); return
+            self.log("Server not running."); self._refresh_status_ui(False); return
         try:
             self.proc.stdin.write("save-all\n"); self.proc.stdin.flush(); time.sleep(1)
             self.log("Sending 'stop'..."); self.proc.stdin.write("stop\n"); self.proc.stdin.flush()
@@ -203,6 +211,7 @@ class Manager:
             self.log("Force kill...")
             try: self.proc.kill()
             except Exception: pass
+        self._refresh_status_ui(False)
 
     # Whitelist helpers
     def read_whitelist_names(self):
@@ -228,6 +237,11 @@ class Manager:
 
 mgr = Manager()
 root = tk.Tk(); root.title(APP_NAME); root.geometry("1280x780")
+
+# Status indicator at top of window
+status_lbl = tk.Label(root, text="\u25cf Minecraft Server Offline", fg="red", font=("Arial", 18, "bold"))
+status_lbl.pack(pady=(10,0))
+
 frm = tk.Frame(root, padx=8, pady=6); frm.pack(fill="both", expand=True)
 
 # Optional splash image (from assets/)
@@ -302,6 +316,16 @@ def exit_app():
 
 for label, cmd in (("Start Server", mgr.start), ("Stop Server", mgr.stop), ("Save All", save_all), ("Backup", run_backup), ("Make stop.flag", make_flag), ("Exit", exit_app)):
     tk.Button(btns, text=label, width=16, command=cmd).pack(side="left", padx=5)
+
+# Update status label
+def ui_update_status(running):
+    if running:
+        status_lbl.config(text="● Minecraft Server Online", fg="green")
+    else:
+        status_lbl.config(text="● Minecraft Server Offline", fg="red")
+
+mgr.ui_update_status = ui_update_status
+ui_update_status(False)
 
 # Left: log + command
 log = scrolledtext.ScrolledText(frm, width=90, height=26, state="disabled")
