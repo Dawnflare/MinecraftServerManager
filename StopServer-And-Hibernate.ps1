@@ -12,8 +12,20 @@ New-Item -Path $flag -ItemType File -Force | Out-Null
 $deadline = (Get-Date).AddMinutes(3)
 $stopped = $false
 while ((Get-Date) -lt $deadline) {
-    if (Test-Path $log -and (Select-String -Path $log -SimpleMatch "Server exited with code" -Quiet)) {
-        $stopped = $true; break
+    if (Test-Path $log) {
+        try {
+            $stream = [System.IO.File]::Open($log, [System.IO.FileMode]::Open,
+                [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            try {
+                $reader = New-Object System.IO.StreamReader($stream)
+                $txt = $reader.ReadToEnd()
+            } finally {
+                $reader.Dispose(); $stream.Dispose()
+            }
+            if ($txt -like '*Server exited with code*') { $stopped = $true; break }
+        } catch {
+            # Ignore file access issues and retry
+        }
     }
     Start-Sleep -Seconds 5
 }
