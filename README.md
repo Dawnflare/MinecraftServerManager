@@ -1,0 +1,148 @@
+# Minecraft Forge Server Manager (Windows GUI)
+
+A tiny, no-console **.pyw** GUI for starting/stopping a **Forge (Java) Minecraft server** on Windows.
+It uses Forge’s official arg files (`@user_jvm_args.txt` and `@...\win_args.txt`), shows live logs,
+lets you send server commands, manage the whitelist, view online players, and integrates with backups
+and Windows Task Scheduler.
+
+> This repo archives the manager script so it’s easy to move to a new PC.  
+> It does **not** include the Forge server files themselves.
+
+---
+
+## Features
+
+- **One-click start/stop** (or auto-start on launch).
+- **Command box** (send any server command).
+- **Whitelist tools**: add/remove and view current list.
+- **Online players panel** (auto-refresh every 30 s; manual refresh button).
+- **Backup button** (runs `backup.bat`; refuses if the server is running).
+- Watches **`stop.flag`** (handy for Task Scheduler shutdowns).
+- Optional **splash image** (PNG/ICO) and **player join/leave log**.
+- Runs as **.pyw** → no black console window.
+
+---
+
+## Requirements
+
+- Windows 10/11
+- Java (JDK 17+; tested with **JDK 21**). Update `JAVA_PATH` in the script.
+- A Forge server folder created with **“Install server”** (this produces `libraries\...\forge\...\win_args.txt`).
+
+Optional:
+- **Tailscale** (or similar) if you’re letting friends connect privately.
+- **Pillow** only if you want to generate a `.ico` from the PNG for a desktop shortcut icon.
+
+---
+
+## Quick start
+
+1. **Place the manager in your server root**, e.g.
+   ```
+   C:\Users\<you>\Minecraft\IceAndFireServer\
+   ```
+   alongside `run.bat` (if you have one), `libraries\`, `mods\`, etc.
+
+2. Open `server_manager_v7e.pyw` (or latest) in a text editor and adjust:
+   ```python
+   JAVA_PATH = r"C:\Program Files\Java\jdk-21\bin\java.exe"
+   XMS = "2G"   # initial heap
+   XMX = "10G"  # max heap
+   ```
+   Optional: put your PNG in the same folder and set `SPLASH_IMAGE`.
+
+3. **Run it**:
+   - Double-click the `.pyw`, or
+   - Shortcut target:
+     ```
+     %SystemRoot%\pyw.exe "C:\...\server_manager_v7e.pyw"
+     ```
+   The GUI opens and (by default) **auto-starts** the server.
+
+> If you see *“Forge win_args.txt not found”*, run the **Forge installer** with **Install server** pointed at this folder.
+
+---
+
+## Buttons & panels
+
+- **Start / Stop** – Launch/quit the server (clean stop).
+- **Save All** – Flush world to disk.
+- **Backup** – Runs `backup.bat` (refuses while server is running).
+- **Make stop.flag** – Creates a `stop.flag`; the app detects it and issues `stop` (nice for Task Scheduler).
+- **Exit** – `save-all` → clean stop → small delay → closes GUI.
+- **Whitelist** – Add/remove players and view the list (remove works offline by editing `whitelist.json` if needed).
+- **Online Players** – Shows who’s on; auto-refreshes every 30 s; **Refresh** sends `list` on demand.
+- **Command** – Send any server command (e.g., `whitelist on`, `op <name>`, `gamerule keepInventory true`).
+
+---
+
+## Backups
+
+- Add your own `backup.bat` in the server root.
+- The **Backup** button streams script output into the GUI log.
+- The app **refuses to run backup while the server is running** (to avoid corrupt snapshots).
+
+Example `backup.bat` (sample – adjust paths):
+```bat
+@echo off
+set SRC=%CD%
+set DST=D:\Backups\MinecraftBackups
+if not exist "%DST%" mkdir "%DST%"
+set TS=%DATE:~10,4%-%DATE:~4,2%-%DATE:~7,2%_%TIME:~0,2%-%TIME:~3,2%
+set TS=%TS: =0%
+powershell -NoProfile -Command "Compress-Archive -Path '%SRC%\world' -DestinationPath '%DST%\world_%TS%.zip' -Force"
+echo Done.
+```
+
+---
+
+## Scheduling (start/stop daily)
+
+See `StopServer-And-Hibernate.ps1` and the PowerShell snippet in this README’s repository history.
+Typical plan:
+
+- **Start tasks** (wake PC) → run the GUI; auto-start kicks in.
+- **Stop tasks** → drop `stop.flag`, wait for a clean exit, **hibernate** or **shutdown**.
+
+Make sure **Power Options → Allow wake timers** is enabled.
+
+---
+
+## Optional helper scripts
+
+- `StopServer-And-Hibernate.ps1` – drops `stop.flag`, waits for exit, then hibernates.
+- `make_icon.py` – turns `IceFireYinYangTransparent.png` → `IceFireYinYang.ico` (requires Pillow).
+- `create_shortcut.ps1` – creates a desktop shortcut that points to the `.pyw` and assigns the icon.
+
+---
+
+## Folder layout (suggested)
+
+```
+MinecraftServerManager/
+├─ server_manager_v7e.pyw
+├─ StopServer-And-Hibernate.ps1
+├─ make_icon.py                 # optional
+├─ create_shortcut.ps1          # optional
+├─ README.md
+├─ .gitignore
+└─ assets/
+   └─ IceFireYinYangTransparent.png  # optional splash/icon
+```
+
+> Do **not** commit your actual server (`world/`, `libraries/`, `mods/`, `whitelist.json`, etc.). Those are large and/or private.
+
+---
+
+## Troubleshooting
+
+- **Java not found** – Update `JAVA_PATH`.
+- **Forge args missing** – Re-run **Forge Installer → Install server** into this folder.
+- **Firewall** – If using a 3rd-party firewall, allow Java for local LAN; for Tailscale, no inbound port-forwarding is needed.
+- **Backup fails** – Stop the server first (the app enforces this on the Backup button).
+
+---
+
+## License
+
+Apache License 2.0 (see `LICENSE` in this repo).
